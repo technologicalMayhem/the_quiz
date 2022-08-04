@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<questions>
+<question>
+    <prompt>What word is used in the NATO Phonetic Alphabet for the letter D?</prompt>
+    <correctAnswer>Delta</correctAnswer>
+    <incorrectAnswers>Dog</incorrectAnswers>
+    <incorrectAnswers>Danube</incorrectAnswers>
+    <incorrectAnswers>Dig</incorrectAnswers>
+</question>
+<question>
+    <prompt>What is the name given to the art of miniaturising trees and maintaining their small size?</prompt>
+    <correctAnswer>Bonsai</correctAnswer>
+    <incorrectAnswers>Ornamental Shrubbery</incorrectAnswers>
+    <incorrectAnswers>Decorage</incorrectAnswers>
+    <incorrectAnswers>Topiary</incorrectAnswers>
+</question>
+<question>
+    <prompt>Who Make Macintosh Computers?</prompt>
+    <correctAnswer>Apple</correctAnswer>
+    <incorrectAnswers>Microsoft</incorrectAnswers>
+    <incorrectAnswers>Google</incorrectAnswers>
+    <incorrectAnswers>Linux</incorrectAnswers>
+</question>
+<question>
+    <prompt>Which computer company was set up by Steven Jobs and Stephen Wozniak?</prompt>
+    <correctAnswer>Apple</correctAnswer>
+    <incorrectAnswers>Blackberry</incorrectAnswers>
+    <incorrectAnswers>Microsoft</incorrectAnswers>
+    <incorrectAnswers>Google</incorrectAnswers>
+</question>
+<question>
+    <prompt>Transformers are ___________ in disguise. </prompt>
+    <correctAnswer>Robots</correctAnswer>
+    <incorrectAnswers>Aliens</incorrectAnswers>
+    <incorrectAnswers>Gods</incorrectAnswers>
+    <incorrectAnswers>Wizards</incorrectAnswers>
+</question>
+</questions>
