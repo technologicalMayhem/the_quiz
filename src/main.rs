@@ -1,13 +1,13 @@
 extern crate xml;
 
-use std::collections::HashMap;
-use std::io::{BufReader};
 use std::fs::File;
+use std::io::BufReader;
 use std::time::Duration;
 
-use crossterm::event::{read, Event, KeyCode, poll};
+use crossterm::event::{poll, read, Event, KeyCode};
 use crossterm::style::Stylize;
 use rand::{seq::SliceRandom, thread_rng};
+use serde::Deserialize;
 use xml::reader::{EventReader, XmlEvent};
 
 fn main() {
@@ -16,10 +16,30 @@ fn main() {
     })
     .expect("Error setting Ctrl-C handler");
 
+    test();
+
     let parser = load_file();
     let data_pieces = parse_data(parser);
     let questions = generate_questions(data_pieces);
     run_game(questions);
+}
+
+fn test() {
+    let res = match reqwest::blocking::get("https://the-trivia-api.com/api/questions?limit=5") {
+        Ok(res) => res,
+        Err(_) => {
+            println!("Error on download");
+            std::process::exit(1)
+        }
+    };
+    let json: Vec<ApiQuestion> = match res.json() {
+        Ok(json) => json,
+        Err(err) => {
+            println!("Error on deserialiation: {err}");
+            std::process::exit(1)
+        }
+    };
+    println!("{:#?}", json)
 }
 
 fn load_file() -> EventReader<BufReader<File>> {
@@ -116,7 +136,6 @@ fn generate_questions(data_pieces: Vec<DataPiece>) -> Vec<Question> {
 }
 
 fn run_game(questions: Vec<Question>) {
-
     let mut rng = thread_rng();
     let mut answered_correctly = 0;
     let mut answered_incorrectly = 0;
@@ -165,10 +184,10 @@ fn run_game(questions: Vec<Question>) {
 
         //Show if they got it right or not
         if answer == correct_answer {
-            println!("{}","Correct!".green());
+            println!("{}", "Correct!".green());
             answered_correctly += 1;
         } else {
-            println!("{}","Wrong!".red());
+            println!("{}", "Wrong!".red());
             answered_incorrectly += 1;
         }
         println!();
@@ -176,7 +195,8 @@ fn run_game(questions: Vec<Question>) {
 
     println!(
         "That's it! You answered {} questions correctly and {} incorrectly.",
-        answered_correctly.to_string().green(), answered_incorrectly.to_string().red()
+        answered_correctly.to_string().green(),
+        answered_incorrectly.to_string().red()
     );
 }
 
@@ -191,4 +211,11 @@ struct Question {
     text: String,
     answer: String,
     wrong_answers: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiQuestion {
+    correctAnswer: String,
+    incorrectAnswers: Vec<String>,
+    question: String,
 }

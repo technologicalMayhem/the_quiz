@@ -10,3 +10,5 @@ xml-rs = "0.8"
 rand = "0.8.5"
 ctrlc = "3.2.2"
 crossterm = "0.24.0"
+serde = { version = "*", features = ["derive"] }
+reqwest = { version = "*", features = ["blocking", "json"] }
