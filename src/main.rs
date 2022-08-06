@@ -2,9 +2,9 @@ extern crate xml;
 
 use std::fs::File;
 use std::io::BufReader;
-use std::time::Duration;
 
-use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
+
+use crossterm::event::{read, Event, KeyCode, KeyEvent};
 use crossterm::style::Stylize;
 use rand::{seq::SliceRandom, thread_rng};
 use serde::Deserialize;
@@ -24,7 +24,7 @@ fn get_questions() -> Vec<Question> {
     println!("What question source should be used?");
     println!("1: File");
     println!("2: Web");
-    
+
     loop {
         match read() {
             Ok(e) => {match e {
@@ -177,30 +177,29 @@ fn run_game(questions: Vec<Question>) {
             }
         }
 
-        let mut answer = usize::MAX;
+        let answer;
         //Read the users response
-        match read() {
-            Ok(e) => match e {
-                Event::Key(event) => {
-                    //Check options for if that the one the user pressed
-                    for option in options {
-                        //Convert the option to a char
-                        let option_char = char::from_digit((option + 1).try_into().unwrap(), 10)
-                            .expect("Could not convert option to character.");
-                        if event.code == KeyCode::Char(option_char) {
-                            answer = option;
+        'input: loop {
+            match read() {
+                Ok(e) => match e {
+                    Event::Key(event) => {
+                        //Check options for if that the one the user pressed
+                        for option in options.clone() {
+                            //Convert the option to a char
+                            let option_char = char::from_digit((option + 1).try_into().unwrap(), 10)
+                                .expect("Could not convert option to character.");
+                            if event.code == KeyCode::Char(option_char) {
+                                answer = option;
+                                break 'input;
+                            }
                         }
                     }
+                    _ => {}
+                },
+                Err(_) => {
+                    println!("There was an error whilst reading the answer.")
                 }
-                _ => {}
-            },
-            Err(_) => {
-                println!("There was an error whilst reading the answer.")
             }
-        }
-        //Get rid of any pending events
-        while poll(Duration::from_secs(0)).expect("Could not poll") {
-            let _ = read();
         }
 
         //Show if they got it right or not
