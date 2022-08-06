@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::time::Duration;
 
-use crossterm::event::{poll, read, Event, KeyCode};
+use crossterm::event::{poll, read, Event, KeyCode, KeyEvent};
 use crossterm::style::Stylize;
 use rand::{seq::SliceRandom, thread_rng};
 use serde::Deserialize;
@@ -16,15 +16,28 @@ fn main() {
     })
     .expect("Error setting Ctrl-C handler");
 
-    test();
-
-    let parser = load_file();
-    let data_pieces = parse_data(parser);
-    let questions = generate_questions(data_pieces);
+    let questions = get_questions();
     run_game(questions);
 }
 
-fn test() {
+fn get_questions() -> Vec<Question> {
+    println!("What question source should be used?");
+    println!("1: File");
+    println!("2: Web");
+    
+    loop {
+        match read() {
+            Ok(e) => {match e {
+                Event::Key(KeyEvent{code: KeyCode::Char('1'), ..}) => { return get_questions_from_file();}
+                Event::Key(KeyEvent{code: KeyCode::Char('2'), ..}) => { return get_questions_from_api();}
+                _ => { continue;},
+            }},
+            Err(_) => {},
+        }
+    }
+}
+
+fn get_questions_from_api() -> Vec<Question> {
     let res = match reqwest::blocking::get("https://the-trivia-api.com/api/questions?limit=5") {
         Ok(res) => res,
         Err(_) => {
@@ -32,14 +45,22 @@ fn test() {
             std::process::exit(1)
         }
     };
-    let json: Vec<ApiQuestion> = match res.json() {
+    let questions: Vec<Question> = match res.json() {
         Ok(json) => json,
         Err(err) => {
             println!("Error on deserialiation: {err}");
             std::process::exit(1)
         }
     };
-    println!("{:#?}", json)
+
+    questions
+}
+
+fn get_questions_from_file() -> Vec<Question> {
+    let parser = load_file();
+    let data_pieces = parse_data(parser);
+    let questions = generate_questions(data_pieces);
+    questions
 }
 
 fn load_file() -> EventReader<BufReader<File>> {
@@ -187,7 +208,7 @@ fn run_game(questions: Vec<Question>) {
             println!("{}", "Correct!".green());
             answered_correctly += 1;
         } else {
-            println!("{}", "Wrong!".red());
+            println!("{} The correct answer is: {}", "Wrong!".red(), q.answer);
             answered_incorrectly += 1;
         }
         println!();
@@ -206,16 +227,12 @@ struct DataPiece {
     data: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 struct Question {
+    #[serde(alias = "question")]
     text: String,
+    #[serde(alias = "correctAnswer")]
     answer: String,
+    #[serde(alias = "incorrectAnswers")]
     wrong_answers: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct ApiQuestion {
-    correctAnswer: String,
-    incorrectAnswers: Vec<String>,
-    question: String,
 }
