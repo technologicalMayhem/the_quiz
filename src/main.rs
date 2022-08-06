@@ -1,9 +1,11 @@
 extern crate xml;
 
-use std::io::BufReader;
+use std::collections::HashMap;
+use std::io::{BufReader};
 use std::fs::File;
+use std::time::Duration;
 
-use crossterm::event::{read, Event, KeyCode};
+use crossterm::event::{read, Event, KeyCode, poll};
 use crossterm::style::Stylize;
 use rand::{seq::SliceRandom, thread_rng};
 use xml::reader::{EventReader, XmlEvent};
@@ -114,6 +116,7 @@ fn generate_questions(data_pieces: Vec<DataPiece>) -> Vec<Question> {
 }
 
 fn run_game(questions: Vec<Question>) {
+
     let mut rng = thread_rng();
     let mut answered_correctly = 0;
     let mut answered_incorrectly = 0;
@@ -154,6 +157,10 @@ fn run_game(questions: Vec<Question>) {
             Err(_) => {
                 println!("There was an error whilst reading the answer.")
             }
+        }
+        //Get rid of any pending events
+        while poll(Duration::from_secs(0)).expect("Could not poll") {
+            let _ = read();
         }
 
         //Show if they got it right or not
