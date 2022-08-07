@@ -3,7 +3,6 @@ extern crate xml;
 use std::fs::File;
 use std::io::BufReader;
 
-
 use crossterm::event::{read, Event, KeyCode, KeyEvent};
 use crossterm::style::Stylize;
 use rand::{seq::SliceRandom, thread_rng};
@@ -27,12 +26,24 @@ fn get_questions() -> Vec<Question> {
 
     loop {
         match read() {
-            Ok(e) => {match e {
-                Event::Key(KeyEvent{code: KeyCode::Char('1'), ..}) => { return get_questions_from_file();}
-                Event::Key(KeyEvent{code: KeyCode::Char('2'), ..}) => { return get_questions_from_api();}
-                _ => { continue;},
-            }},
-            Err(_) => {},
+            Ok(e) => match e {
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('1'),
+                    ..
+                }) => {
+                    return get_questions_from_file();
+                }
+                Event::Key(KeyEvent {
+                    code: KeyCode::Char('2'),
+                    ..
+                }) => {
+                    return get_questions_from_api();
+                }
+                _ => {
+                    continue;
+                }
+            },
+            Err(_) => {}
         }
     }
 }
@@ -58,8 +69,7 @@ fn get_questions_from_api() -> Vec<Question> {
 
 fn get_questions_from_file() -> Vec<Question> {
     let parser = load_file();
-    let data_pieces = parse_data(parser);
-    let questions = generate_questions(data_pieces);
+    let questions = parse_data(parser);
     questions
 }
 
@@ -79,29 +89,89 @@ fn load_file() -> EventReader<BufReader<File>> {
     EventReader::new(file)
 }
 
-fn parse_data(parser: EventReader<BufReader<File>>) -> Vec<DataPiece> {
+fn parse_data(parser: EventReader<BufReader<File>>) -> Vec<Question> {
     //Parse Questions
-    let mut data: Vec<DataPiece> = Vec::new();
-    let mut data_type = String::new();
-    let mut data_text = String::new();
+    let mut data: Vec<Question> = Vec::new();
+    let mut cur_question: Option<Question> = None;
+    let mut cur_data: Option<String> = None;
 
     for e in parser {
         match e {
             Ok(e) => match e {
-                XmlEvent::StartElement { name, .. } => {
-                    data_type = name.local_name.clone();
-                }
-                XmlEvent::EndElement { name } => {
-                    if data_type == name.local_name {
-                        data.push(DataPiece {
-                            data_type: data_type.clone(),
-                            data: data_text.clone(),
-                        })
+                XmlEvent::StartElement { name, .. } => match name.local_name.as_str() {
+                    "question" => cur_question = Some(Question::new()),
+                    "prompt" => match cur_question {
+                        Some(_) => cur_data = Some(String::new()),
+                        None => {
+                            println!("Unexpected prompt tag.")
+                        }
+                    },
+                    "correctAnswer" => match cur_question {
+                        Some(_) => cur_data = Some(String::new()),
+                        None => {
+                            println!("Unexpected correctAnswer tag.")
+                        }
+                    },
+                    "incorrectAnswer" => match cur_question {
+                        Some(_) => cur_data = Some(String::new()),
+                        None => {
+                            println!("Unexpected incorrectAnswer tag.")
+                        }
+                    },
+                    _ => {}
+                },
+                XmlEvent::EndElement { name } => match name.local_name.as_str() {
+                    "question" => match cur_question {
+                        Some(_) => data.push(cur_question.take().unwrap()),
+                        None => {
+                            println!("Unexpected closing question tag.")
+                        }
+                    },
+                    "prompt" => match cur_question {
+                        Some(_) => {
+                            let mut question = cur_question.take().unwrap();
+                            let data = cur_data.take().unwrap();
+                            question.text = data;
+                            cur_question = Some(question)
+                        }
+                        None => {
+                            println!("Unexpected closing prompt tag.")
+                        }
+                    },
+                    "correctAnswer" => match cur_question {
+                        Some(_) => {
+                            let mut question = cur_question.take().unwrap();
+                            let data = cur_data.take().unwrap();
+                            question.answer = data;
+                            cur_question = Some(question);
+                        }
+                        None => {
+                            println!("Unexpected closing correctAnswer tag.")
+                        }
+                    },
+                    "incorrectAnswer" => match cur_question {
+                        Some(_) => {
+                            let mut question = cur_question.take().unwrap();
+                            let data = cur_data.take().unwrap();
+                            question.wrong_answers.push(data);
+                            cur_question = Some(question);
+                        }
+                        None => {
+                            println!("Unexpected closing incorrectAnswer tag.")
+                        }
+                    },
+                    _ => {}
+                },
+                XmlEvent::Characters(s) => match cur_data {
+                    Some(_) => {
+                        let mut data = cur_data.take().unwrap();
+                        data.push_str(s.as_str());
+                        cur_data = Some(data);
                     }
-                }
-                XmlEvent::Characters(s) => {
-                    data_text = s.clone();
-                }
+                    None => {
+                        panic!("We should not be getting characters here.")
+                    }
+                },
                 _ => {}
             },
             Err(e) => {
@@ -112,48 +182,6 @@ fn parse_data(parser: EventReader<BufReader<File>>) -> Vec<DataPiece> {
     }
 
     data
-}
-
-fn generate_questions(data_pieces: Vec<DataPiece>) -> Vec<Question> {
-    //Find the start and end indices of the question data
-    let mut blocks: Vec<(usize, usize)> = Vec::new();
-
-    let mut start_index = 0;
-    for i in 0..data_pieces.len() {
-        if i != start_index && &data_pieces[i].data_type == "prompt" {
-            blocks.push((start_index, i));
-            start_index = i;
-        }
-    }
-    blocks.push((start_index, data_pieces.len()));
-
-    //Generate the questions from the data pieces usign the start and end indices
-    let mut questions: Vec<Question> = Vec::new();
-    for block in blocks {
-        let mut text: String = String::new();
-        let mut answer: String = String::new();
-        let mut wrong_answers: Vec<String> = Vec::new();
-
-        for i in block.0..block.1 {
-            let d = &data_pieces[i];
-            match d.data_type.as_str() {
-                "prompt" => text = d.data.clone(),
-                "correctAnswer" => answer = d.data.clone(),
-                "incorrectAnswers" => wrong_answers.push(d.data.clone()),
-                _ => {
-                    panic!("Unhandled property: {}", data_pieces[i].data_type)
-                }
-            }
-        }
-
-        questions.push(Question {
-            text,
-            answer,
-            wrong_answers,
-        });
-    }
-
-    questions
 }
 
 fn run_game(questions: Vec<Question>) {
@@ -186,8 +214,9 @@ fn run_game(questions: Vec<Question>) {
                         //Check options for if that the one the user pressed
                         for option in options.clone() {
                             //Convert the option to a char
-                            let option_char = char::from_digit((option + 1).try_into().unwrap(), 10)
-                                .expect("Could not convert option to character.");
+                            let option_char =
+                                char::from_digit((option + 1).try_into().unwrap(), 10)
+                                    .expect("Could not convert option to character.");
                             if event.code == KeyCode::Char(option_char) {
                                 answer = option;
                                 break 'input;
@@ -220,12 +249,6 @@ fn run_game(questions: Vec<Question>) {
     );
 }
 
-#[derive(Debug)]
-struct DataPiece {
-    data_type: String,
-    data: String,
-}
-
 #[derive(Clone, Debug, Deserialize)]
 struct Question {
     #[serde(alias = "question")]
@@ -234,4 +257,14 @@ struct Question {
     answer: String,
     #[serde(alias = "incorrectAnswers")]
     wrong_answers: Vec<String>,
+}
+
+impl Question {
+    fn new() -> Question {
+        Question {
+            text: String::new(),
+            answer: String::new(),
+            wrong_answers: Vec::new(),
+        }
+    }
 }

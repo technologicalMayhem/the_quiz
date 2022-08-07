@@ -3,36 +3,36 @@
 <question>
     <prompt>What word is used in the NATO Phonetic Alphabet for the letter D?</prompt>
     <correctAnswer>Delta</correctAnswer>
-    <incorrectAnswers>Dog</incorrectAnswers>
-    <incorrectAnswers>Danube</incorrectAnswers>
-    <incorrectAnswers>Dig</incorrectAnswers>
+    <incorrectAnswer>Dog</incorrectAnswer>
+    <incorrectAnswer>Danube</incorrectAnswer>
+    <incorrectAnswer>Dig</incorrectAnswer>
 </question>
 <question>
     <prompt>What is the name given to the art of miniaturising trees and maintaining their small size?</prompt>
     <correctAnswer>Bonsai</correctAnswer>
-    <incorrectAnswers>Ornamental Shrubbery</incorrectAnswers>
-    <incorrectAnswers>Decorage</incorrectAnswers>
-    <incorrectAnswers>Topiary</incorrectAnswers>
+    <incorrectAnswer>Ornamental Shrubbery</incorrectAnswer>
+    <incorrectAnswer>Decorage</incorrectAnswer>
+    <incorrectAnswer>Topiary</incorrectAnswer>
 </question>
 <question>
     <prompt>Who Make Macintosh Computers?</prompt>
     <correctAnswer>Apple</correctAnswer>
-    <incorrectAnswers>Microsoft</incorrectAnswers>
-    <incorrectAnswers>Google</incorrectAnswers>
-    <incorrectAnswers>Linux</incorrectAnswers>
+    <incorrectAnswer>Microsoft</incorrectAnswer>
+    <incorrectAnswer>Google</incorrectAnswer>
+    <incorrectAnswer>Linux</incorrectAnswer>
 </question>
 <question>
     <prompt>Which computer company was set up by Steven Jobs and Stephen Wozniak?</prompt>
     <correctAnswer>Apple</correctAnswer>
-    <incorrectAnswers>Blackberry</incorrectAnswers>
-    <incorrectAnswers>Microsoft</incorrectAnswers>
-    <incorrectAnswers>Google</incorrectAnswers>
+    <incorrectAnswer>Blackberry</incorrectAnswer>
+    <incorrectAnswer>Microsoft</incorrectAnswer>
+    <incorrectAnswer>Google</incorrectAnswer>
 </question>
 <question>
     <prompt>Transformers are ___________ in disguise. </prompt>
     <correctAnswer>Robots</correctAnswer>
-    <incorrectAnswers>Aliens</incorrectAnswers>
-    <incorrectAnswers>Gods</incorrectAnswers>
-    <incorrectAnswers>Wizards</incorrectAnswers>
+    <incorrectAnswer>Aliens</incorrectAnswer>
+    <incorrectAnswer>Gods</incorrectAnswer>
+    <incorrectAnswer>Wizards</incorrectAnswer>
 </question>
 </questions>
