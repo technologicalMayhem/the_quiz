@@ -100,65 +100,31 @@ fn parse_data(parser: EventReader<BufReader<File>>) -> Vec<Question> {
             Ok(e) => match e {
                 XmlEvent::StartElement { name, .. } => match name.local_name.as_str() {
                     "question" => cur_question = Some(Question::new()),
-                    "prompt" => match cur_question {
+                    "prompt" | "correctAnswer" | "incorrectAnswer" => match cur_question {
                         Some(_) => cur_data = Some(String::new()),
-                        None => {
-                            println!("Unexpected prompt tag.")
-                        }
+                        None => warn_unexpected_tag(name.local_name.as_str(), false),
                     },
-                    "correctAnswer" => match cur_question {
-                        Some(_) => cur_data = Some(String::new()),
-                        None => {
-                            println!("Unexpected correctAnswer tag.")
-                        }
-                    },
-                    "incorrectAnswer" => match cur_question {
-                        Some(_) => cur_data = Some(String::new()),
-                        None => {
-                            println!("Unexpected incorrectAnswer tag.")
-                        }
-                    },
-                    _ => {}
+                    _ => warn_unexpected_tag(name.local_name.as_str(), false),
                 },
                 XmlEvent::EndElement { name } => match name.local_name.as_str() {
                     "question" => match cur_question {
                         Some(_) => data.push(cur_question.take().unwrap()),
-                        None => {
-                            println!("Unexpected closing question tag.")
-                        }
+                        None => warn_unexpected_tag("question", true),
                     },
-                    "prompt" => match cur_question {
+                    "prompt" | "correctAnswer" | "incorrectAnswer" => match cur_question {
                         Some(_) => {
                             let mut question = cur_question.take().unwrap();
                             let data = cur_data.take().unwrap();
-                            question.text = data;
+                            if name.local_name == "prompt" {
+                                question.text = data;
+                            } else if name.local_name == "correctAnswer" {
+                                question.answer = data;
+                            } else if name.local_name == "incorrectAnswer" {
+                                question.wrong_answers.push(data);
+                            }
                             cur_question = Some(question)
                         }
-                        None => {
-                            println!("Unexpected closing prompt tag.")
-                        }
-                    },
-                    "correctAnswer" => match cur_question {
-                        Some(_) => {
-                            let mut question = cur_question.take().unwrap();
-                            let data = cur_data.take().unwrap();
-                            question.answer = data;
-                            cur_question = Some(question);
-                        }
-                        None => {
-                            println!("Unexpected closing correctAnswer tag.")
-                        }
-                    },
-                    "incorrectAnswer" => match cur_question {
-                        Some(_) => {
-                            let mut question = cur_question.take().unwrap();
-                            let data = cur_data.take().unwrap();
-                            question.wrong_answers.push(data);
-                            cur_question = Some(question);
-                        }
-                        None => {
-                            println!("Unexpected closing incorrectAnswer tag.")
-                        }
+                        None => warn_unexpected_tag(name.local_name.as_str(), true),
                     },
                     _ => {}
                 },
@@ -182,6 +148,14 @@ fn parse_data(parser: EventReader<BufReader<File>>) -> Vec<Question> {
     }
 
     data
+}
+
+fn warn_unexpected_tag(name: &str, closing: bool) {
+    if closing {
+        println!("Unexpected closing {name} tag.")
+    } else {
+        println!("Unexpected {name} tag.")
+    }
 }
 
 fn run_game(questions: Vec<Question>) {
